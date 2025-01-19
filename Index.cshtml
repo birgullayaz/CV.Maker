@@ -1,0 +1,204 @@
+﻿@{
+    ViewData["Title"] = "CV Maker";
+}
+
+<div class="container mt-4">
+    <form method="post" action="/Home/DownloadPdf" class="bg-white p-4 rounded shadow" enctype="multipart/form-data">
+        <!-- Header Section -->
+        <div class="row mb-4 bg-danger-subtle p-4 rounded">
+            <div class="col-md-3">
+                <div class="rounded-circle bg-secondary position-relative" style="width: 150px; height: 150px; overflow: hidden;">
+                    <input type="file" name="photo" class="form-control position-absolute" 
+                           accept="image/*" onchange="previewImage(this)" 
+                           style="opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                    <img id="photoPreview" src="#" alt="" 
+                         style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                    <div id="uploadIcon" class="position-absolute top-50 start-50 translate-middle text-white">
+                        <i class="bi bi-camera"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Surname</label>
+                        <input type="text" name="surname" class="form-control" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-md-4">
+                <!-- Contact Information -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2 text-danger">My Contact</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" name="phone" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <textarea name="address" class="form-control" rows="2" required></textarea>
+                    </div>
+                </div>
+
+                <!-- Hard Skills -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2 text-danger">Hard Skills</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Skills (comma separated)</label>
+                        <textarea name="skills" class="form-control" rows="4" placeholder="Financial modeling, Data analysis, Financial accounting"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-md-8">
+                <!-- About Me -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2 text-danger">About Me</h5>
+                    <div class="mb-3">
+                        <label class="form-label">School</label>
+                        <input type="text" name="school" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <input type="text" name="department" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">About Text (max 1000 characters)</label>
+                        <textarea name="aboutText" class="form-control" rows="4" 
+                                  maxlength="1000" 
+                                  onkeyup="updateCharCount(this)"
+                                  required></textarea>
+                        <small class="text-muted">
+                            <span id="charCount">0</span>/1000 characters
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Professional Experience -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2 text-danger">Professional Experience</h5>
+                    <div id="experienceContainer">
+                        <div class="experience-entry mb-3">
+                            <div class="card p-3">
+                                <div class="mb-3">
+                                    <label class="form-label">Experience Name</label>
+                                    <input type="text" name="experienceNames[]" class="form-control" required>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Start Date</label>
+                                        <input type="date" name="startDates[]" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Finish Date</label>
+                                        <input type="date" name="finishDates[]" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Description</label>
+                                    <textarea name="experienceDescriptions[]" class="form-control" rows="2" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-outline-danger" onclick="addExperience()">
+                            <i class="bi bi-plus-circle"></i> Add Experience
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-danger px-5">Generate PDF</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Set default dates
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const startDate = document.querySelector('input[name="startDate"]');
+            const finishDate = document.querySelector('input[name="finishDate"]');
+            
+            if (startDate && finishDate) {
+                startDate.valueAsDate = today;
+                finishDate.valueAsDate = today;
+            }
+        });
+
+        function previewImage(input) {
+            var preview = document.getElementById('photoPreview');
+            var uploadIcon = document.getElementById('uploadIcon');
+            
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    uploadIcon.style.display = 'none';
+                }
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function updateCharCount(textarea) {
+            const maxLength = 1000;
+            const currentLength = textarea.value.length;
+            document.getElementById('charCount').textContent = currentLength;
+            
+            if (currentLength > maxLength) {
+                textarea.value = textarea.value.substring(0, maxLength);
+            }
+        }
+
+        function addExperience() {
+            const container = document.getElementById('experienceContainer');
+            const entries = container.getElementsByClassName('experience-entry');
+            
+            if (entries.length < 5) { // Maximum 5 experiences
+                const newEntry = entries[0].cloneNode(true);
+                
+                // Clear all input values
+                newEntry.querySelectorAll('input, textarea').forEach(input => {
+                    input.value = '';
+                });
+                
+                // Add remove button if it's not the first entry
+                if (entries.length > 0) {
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2';
+                    removeBtn.innerHTML = '<i class="bi bi-x-circle"></i>';
+                    removeBtn.onclick = function() {
+                        this.closest('.experience-entry').remove();
+                    };
+                    newEntry.querySelector('.card').appendChild(removeBtn);
+                }
+                
+                container.appendChild(newEntry);
+            } else {
+                alert('Maximum 5 experiences allowed');
+            }
+        }
+    </script>
+}
